@@ -67,10 +67,8 @@ class MochiExporter {
     });
   }
 
-  async getMochiCardsEdn(): Promise<string> {
-    let cards: Card[] = await this.readCards();
+  async getMochiCardsEdn(cards: Card[]): Promise<string> {
     let deckName = this.getDeckName();
-
     let mochiCard = "{:decks [{";
     mochiCard += ':name "' + deckName + '",';
     mochiCard += ":cards (";
@@ -95,51 +93,67 @@ class MochiExporter {
   }
 
   async exportMochiCards() {
-    const mochiCardsEdn = await this.getMochiCardsEdn();
-    const stringEnc = new util.TextEncoder();
-    const buffer = stringEnc.encode(mochiCardsEdn);
-    const zipped = zipSync({
-      "data.edn": buffer,
-    });
+    const cards: Card[] = await this.readCards();
+    const count = cards.length;
+    if (count == 0) {
+      new Notice("No Cards Found!");
+    } else {
+      const mochiCardsEdn = await this.getMochiCardsEdn(cards);
+      const stringEnc = new util.TextEncoder();
+      const buffer = stringEnc.encode(mochiCardsEdn);
+      const zipped = zipSync({
+        "data.edn": buffer,
+      });
 
-    try {
-      if (this.settings.useDefaultSaveLocation) {
-        let savePath = path.join(
-          this.settings.defaultSaveLocation,
-          `${this.getDeckName()}.mochi`
-        );
-        this.saveFile(savePath, zipped);
-      } else {
-        const options = {
-          title: "Select a Folder",
-          properties: ["openDirectory"],
-          defaultPath: this.settings.defaultSaveLocation,
-        };
+      const successMessage = `${count} Card${
+        count > 1 ? "s" : ""
+      } Exported Successfully`;
+      const errorMessage = "Error Occurred Exporting Your Cards!";
 
-        const saveResponse = await dialog.showOpenDialog(null, options);
-
-        if (!saveResponse.canceled) {
+      try {
+        if (this.settings.useDefaultSaveLocation) {
           let savePath = path.join(
-            saveResponse.filePaths[0],
+            this.settings.defaultSaveLocation,
             `${this.getDeckName()}.mochi`
           );
-          this.saveFile(savePath, zipped);
+          this.saveFile(savePath, zipped, successMessage, errorMessage);
         } else {
-          new Notice("Export Canceled");
+          const options = {
+            title: "Select a Folder",
+            properties: ["openDirectory"],
+            defaultPath: this.settings.defaultSaveLocation,
+          };
+
+          const saveResponse = await dialog.showOpenDialog(null, options);
+
+          if (!saveResponse.canceled) {
+            let savePath = path.join(
+              saveResponse.filePaths[0],
+              `${this.getDeckName()}.mochi`
+            );
+            this.saveFile(savePath, zipped, successMessage, errorMessage);
+          } else {
+            new Notice("Export Canceled");
+          }
         }
+      } catch (error) {
+        new Notice("Error Occurred Trying to Export Your Cards");
       }
-    } catch (error) {
-      new Notice("Error Occurred Trying to Export Your Cards");
     }
   }
 
-  saveFile(path: string, file: Uint8Array) {
+  saveFile(
+    path: string,
+    file: Uint8Array,
+    successMessage: string,
+    errorMessage: string
+  ) {
     fs.writeFile(path, file, (error: any) => {
       if (error) {
         console.log(error);
-        new Notice("Error Occurred Exporting Your Cards!");
+        new Notice(errorMessage);
       } else {
-        new Notice("Your Cards Have been Exported Successfully!");
+        new Notice(successMessage);
       }
     });
   }
