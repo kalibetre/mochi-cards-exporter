@@ -1,27 +1,43 @@
 import {
   App,
-  Modal,
   Notice,
   Plugin,
   PluginSettingTab,
   Setting,
 } from "obsidian";
 
-interface MyPluginSettings {
-  mySetting: string;
+const dialog = require("electron").remote.dialog;
+const homedir = require("os").homedir();
+
+interface Settings {
+  useDefaultSaveLocation: boolean;
+  cardTag: string;
+  deckNamingOption: string;
+  defaultSaveLocation: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-  mySetting: "default",
+const DECK_FROM_ACTIVE_FILE_NAME = "Use Active File Name";
+const DECK_FROM_FRONTMATTER = "Get From Front Matter";
+
+const DEFAULT_SETTINGS: Settings = {
+  useDefaultSaveLocation: false,
+  cardTag: "card",
+  deckNamingOption: DECK_FROM_ACTIVE_FILE_NAME,
+  defaultSaveLocation: "",
 };
 
 export default class MyPlugin extends Plugin {
-  settings: MyPluginSettings;
+  settings: Settings;
 
   async onload() {
-    console.log("loading plugin");
+    console.log("loading obsidian to mochi converter plugin");
 
     await this.loadSettings();
+
+    if (this.settings.defaultSaveLocation === "") {
+      this.settings.defaultSaveLocation = homedir;
+      await this.saveSettings();
+    }
 
     this.addRibbonIcon("dice", "Sample Plugin", () => {
       new Notice("This is a notice!");
@@ -30,16 +46,12 @@ export default class MyPlugin extends Plugin {
     this.addStatusBarItem().setText("Status Bar Text");
 
     this.addCommand({
-      id: "open-sample-modal",
-      name: "Open Sample Modal",
-      // callback: () => {
-      // 	console.log('Simple Callback');
-      // },
+      id: "export-cards-to-mochi",
+      name: "Export Cards to Mochi",,
       checkCallback: (checking: boolean) => {
         let leaf = this.app.workspace.activeLeaf;
         if (leaf) {
           if (!checking) {
-            new SampleModal(this.app).open();
           }
           return true;
         }
@@ -47,19 +59,7 @@ export default class MyPlugin extends Plugin {
       },
     });
 
-    this.addSettingTab(new SampleSettingTab(this.app, this));
-
-    this.registerCodeMirror((cm: CodeMirror.Editor) => {
-      console.log("codemirror", cm);
-    });
-
-    this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-      console.log("click", evt);
-    });
-
-    this.registerInterval(
-      window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-    );
+    this.addSettingTab(new SettingTab(this.app, this));
   }
 
   onunload() {
@@ -75,23 +75,7 @@ export default class MyPlugin extends Plugin {
   }
 }
 
-class SampleModal extends Modal {
-  constructor(app: App) {
-    super(app);
-  }
-
-  onOpen() {
-    let { contentEl } = this;
-    contentEl.setText("Woah!");
-  }
-
-  onClose() {
-    let { contentEl } = this;
-    contentEl.empty();
-  }
-}
-
-class SampleSettingTab extends PluginSettingTab {
+class SettingTab extends PluginSettingTab {
   plugin: MyPlugin;
 
   constructor(app: App, plugin: MyPlugin) {
@@ -101,23 +85,81 @@ class SampleSettingTab extends PluginSettingTab {
 
   display(): void {
     let { containerEl } = this;
-
     containerEl.empty();
+    containerEl.createEl("h3", { text: "Obsidian to Mochi" });
 
-    containerEl.createEl("h2", { text: "Settings for my awesome plugin." });
+    const toggleSettingsEl = () => {
+      this.plugin.settings.useDefaultSaveLocation
+        ? defaultSaveLocSettingEl.show()
+        : defaultSaveLocSettingEl.hide();
+    };
 
     new Setting(containerEl)
-      .setName("Setting #1")
-      .setDesc("It's a secret")
-      .addText((text) =>
-        text
-          .setPlaceholder("Enter your secret")
-          .setValue("")
-          .onChange(async (value) => {
-            console.log("Secret: " + value);
-            this.plugin.settings.mySetting = value;
-            await this.plugin.saveSettings();
+      .setName("Deck Naming Option")
+      .setDesc(
+        "If you select to get from frontmatter, use the key 'deck' to specify the deck name"
+      )
+      .addDropdown((dropdown) => {
+        dropdown
+          .addOption(DECK_FROM_ACTIVE_FILE_NAME, DECK_FROM_ACTIVE_FILE_NAME)
+          .addOption(DECK_FROM_FRONTMATTER, DECK_FROM_FRONTMATTER)
+          .onChange((value) => {
+            this.plugin.settings.deckNamingOption = value;
           })
+          .setValue(this.plugin.settings.deckNamingOption);
+      });
+
+    new Setting(containerEl)
+      .setName("Card Tag")
+      .setDesc("Enter the tag that is used to identify cards")
+      .addText((text) =>
+        text.setValue(this.plugin.settings.cardTag).onChange(async (value) => {
+          if (value.length === 0) {
+            new Notice("Tag should not be empty");
+          } else {
+            this.plugin.settings.cardTag = value;
+            await this.plugin.saveSettings();
+          }
+        })
       );
+
+    new Setting(containerEl)
+      .setName("Use Default Save Location")
+      .setDesc(
+        "If you turn this off, you will be prompted to choose save location for exports."
+      )
+      .addToggle((toggle) =>
+        toggle
+          .onChange(async (value) => {
+            this.plugin.settings.useDefaultSaveLocation = value;
+            await this.plugin.saveSettings();
+            toggleSettingsEl();
+          })
+          .setValue(this.plugin.settings.useDefaultSaveLocation)
+      );
+
+    const defaultSaveLocation = new Setting(containerEl);
+    const defaultSaveLocSettingEl = defaultSaveLocation.settingEl;
+    const defaultSaveLocationTextEl = defaultSaveLocation.descEl;
+
+    defaultSaveLocationTextEl.innerText = this.plugin.settings.defaultSaveLocation;
+
+    defaultSaveLocation.setName("Default Save Location").addButton((button) => {
+      button.setButtonText("Select Folder").onClick(async () => {
+        const options = {
+          title: "Select a Folder",
+          properties: ["openDirectory"],
+          defaultPath: this.plugin.settings.defaultSaveLocation,
+        };
+        const response = await dialog.showOpenDialog(null, options);
+        if (!response.canceled) {
+          this.plugin.settings.defaultSaveLocation = response.filePaths[0];
+          await this.plugin.saveSettings();
+          defaultSaveLocationTextEl.innerText = this.plugin.settings.defaultSaveLocation;
+        }
+      });
+    }).settingEl;
+
+    toggleSettingsEl();
   }
 }
