@@ -1,10 +1,4 @@
-import {
-  App,
-  Notice,
-  Plugin,
-  PluginSettingTab,
-  Setting,
-} from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 
 const dialog = require("electron").remote.dialog;
 const homedir = require("os").homedir();
@@ -47,7 +41,7 @@ export default class MyPlugin extends Plugin {
 
     this.addCommand({
       id: "export-cards-to-mochi",
-      name: "Export Cards to Mochi",,
+      name: "Export Cards to Mochi",
       checkCallback: (checking: boolean) => {
         let leaf = this.app.workspace.activeLeaf;
         if (leaf) {
@@ -97,7 +91,7 @@ class SettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Deck Naming Option")
       .setDesc(
-        "If you select to get from frontmatter, use the key 'deck' to specify the deck name"
+        "If you select to get from Frontmatter, use the key 'deck' to specify the deck name. (If no Frontmatter is found, the active file name will be used)"
       )
       .addDropdown((dropdown) => {
         dropdown
@@ -111,7 +105,7 @@ class SettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Card Tag")
-      .setDesc("Enter the tag that is used to identify cards")
+      .setDesc("Tag to identify mochi cards (case-insensitive)")
       .addText((text) =>
         text.setValue(this.plugin.settings.cardTag).onChange(async (value) => {
           if (value.length === 0) {
@@ -126,7 +120,7 @@ class SettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Use Default Save Location")
       .setDesc(
-        "If you turn this off, you will be prompted to choose save location for exports."
+        "If you turn this off, you will be prompted to choose a folder for exports."
       )
       .addToggle((toggle) =>
         toggle
