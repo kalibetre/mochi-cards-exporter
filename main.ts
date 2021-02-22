@@ -1,8 +1,9 @@
-import { Plugin } from "obsidian";
+import { addIcon, Plugin } from "obsidian";
 import MochiExporter from "lib/MochiExporter";
 import { DEFAULT_SETTINGS } from "lib/Constants";
 import { Settings } from "lib/types";
 import SettingTab from "lib/SettingTab";
+import { icons } from "lib/icons";
 
 const homedir = require("os").homedir();
 
@@ -19,7 +20,9 @@ export default class MyPlugin extends Plugin {
       await this.saveSettings();
     }
 
-    this.addRibbonIcon("dice", "Sample Plugin", () => {
+    this.addIcons();
+
+    this.addRibbonIcon(icons.stackedCards.key, "Mochi Cards Exporter", () => {
       this.exportMochiCards();
     });
 
@@ -43,6 +46,10 @@ export default class MyPlugin extends Plugin {
 
   onunload() {
     console.log("unloading obsidian to mochi converter plugin");
+  }
+
+  addIcons() {
+    addIcon(icons.stackedCards.key, icons.stackedCards.svgContent);
   }
 
   async loadSettings() {
