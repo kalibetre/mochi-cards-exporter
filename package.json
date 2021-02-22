@@ -1,13 +1,17 @@
 {
-  "name": "obsidian-sample-plugin",
-  "version": "0.9.7",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "name": "mochi-cards-exporter",
+  "version": "0.1.0",
+  "description": "Export Markdown Notes to Mochi cards from within obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js"
   },
-  "keywords": [],
+  "keywords": [
+    "Mochi",
+    "Mochi Cards",
+    "Flashcards"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {

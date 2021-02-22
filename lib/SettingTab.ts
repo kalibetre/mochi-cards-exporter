@@ -14,7 +14,7 @@ class SettingTab extends PluginSettingTab {
   display(): void {
     let { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h3", { text: "Obsidian to Mochi" });
+    containerEl.createEl("h3", { text: "Mochi Cards Exporter" });
 
     const toggleSettingsEl = () => {
       this.plugin.settings.useDefaultSaveLocation
