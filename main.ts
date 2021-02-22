@@ -61,7 +61,6 @@ export default class MyPlugin extends Plugin {
   }
 
   exportMochiCards = async () => {
-    this.addStatusBarItem().setText("Exporting to Mochi ....");
     let activeFile = this.app.workspace.getActiveFile();
     let fileContent = await this.app.vault.read(activeFile);
     let metaData = this.app.metadataCache.getFileCache(activeFile);
@@ -74,6 +73,5 @@ export default class MyPlugin extends Plugin {
     );
 
     await mochiExporter.exportMochiCards();
-    this.addStatusBarItem().setText("");
   };
 }
