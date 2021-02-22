@@ -39,7 +39,7 @@ class SettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Card Tag")
-      .setDesc("Tag to identify mochi cards (case-insensitive)")
+      .setDesc("Tag to identify Mochi cards (case-insensitive)")
       .addText((text) =>
         text.setValue(this.plugin.settings.cardTag).onChange(async (value) => {
           if (value.length === 0) {
