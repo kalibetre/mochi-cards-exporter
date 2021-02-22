@@ -30,8 +30,8 @@ export default class MyPlugin extends Plugin {
       id: "export-cards-to-mochi",
       name: "Export Cards to Mochi",
       checkCallback: (checking: boolean) => {
-        let leaf = this.app.workspace.activeLeaf;
-        if (leaf) {
+        let activeFile = this.app.workspace.getActiveFile();
+        if (activeFile) {
           if (!checking) {
             this.exportMochiCards();
           }
