@@ -41,7 +41,7 @@ class MochiExporter {
 
   async readCards(): Promise<Card[]> {
     let lines = await this.getLines();
-    let cardTag = this.settings.cardTag.toLowerCase();
+    let cardTag = "#" + this.settings.cardTag.toLowerCase();
 
     let cards: Card[] = [];
     for (let i = 0; i < lines.length; i++) {
@@ -51,13 +51,17 @@ class MochiExporter {
           content: "",
         };
         i++;
-        while (lines[i].length > 0) {
-          if (lines[i].trim() !== "---" && lines[i].trim() !== "***") {
-            card.content =
-              card.content + (card.content.length === 0 ? "" : "\n") + lines[i];
-            i++;
-          }
+        let cardContent = "";
+        while (
+          i < lines.length &&
+          lines[i].trim() !== "---" &&
+          lines[i].trim() !== "***"
+        ) {
+          cardContent += (cardContent.length === 0 ? "" : "\n") + lines[i];
+          i++;
         }
+
+        card.content = cardContent;
         cards.push(card);
       }
     }
@@ -70,19 +74,17 @@ class MochiExporter {
   async getMochiCardsEdn(cards: Card[]): Promise<string> {
     let deckName = this.getDeckName();
     let mochiCard = "{:decks [{";
-    mochiCard += ':name "' + deckName + '",';
+    mochiCard += ":name " + JSON.stringify(deckName) + ",";
     mochiCard += ":cards (";
 
     for (let i = 0; i < cards.length; i++) {
       mochiCard +=
-        '{:name "' +
-        cards[i].term +
-        '",' +
-        ':content "' +
-        cards[i].term +
-        "\n---\n" +
-        cards[i].content +
-        '"}';
+        "{:name " +
+        JSON.stringify(cards[i].term) +
+        "," +
+        ":content " +
+        JSON.stringify(cards[i].term + "\n---\n" + cards[i].content) +
+        "}";
     }
 
     mochiCard += ")";
