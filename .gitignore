@@ -6,3 +6,6 @@ package-lock.json
 main.js
 *.js.map
 *.log
+
+#plugin
+data.json
