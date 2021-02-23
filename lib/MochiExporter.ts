@@ -1,9 +1,8 @@
 import { DECK_FROM_ACTIVE_FILE_NAME } from "./Constants";
-import { zipSync } from "fflate";
+import { strToU8, zipSync } from "fflate";
 import { TFile, CachedMetadata, parseFrontMatterEntry, Notice } from "obsidian";
 import { Card, Settings } from "./types";
 const path = require("path");
-const util = require("util");
 const dialog = require("electron").remote.dialog;
 const fs = require("fs");
 
@@ -12,6 +11,7 @@ class MochiExporter {
   fileContent: string;
   metaData: CachedMetadata;
   settings: Settings;
+  mediaFiles: string[] = [];
 
   constructor(
     activeFile: TFile,
@@ -43,6 +43,8 @@ class MochiExporter {
     let lines = await this.getLines();
     let cardTag = "#" + this.settings.cardTag.toLowerCase();
 
+    let linkRegex = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
+
     let cards: Card[] = [];
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].contains(cardTag)) {
@@ -57,6 +59,16 @@ class MochiExporter {
           lines[i].trim() !== "---" &&
           lines[i].trim() !== "***"
         ) {
+          lines[i] = lines[i].replace(linkRegex, (match) => {
+            let fileName = match
+              .replace("[[", "")
+              .replace("]]", "")
+              .replace(" ", "_");
+            let path = `[${fileName}](@media/${fileName})`;
+            this.mediaFiles.push(fileName);
+            return path;
+          });
+
           cardContent += (cardContent.length === 0 ? "" : "\n") + lines[i];
           i++;
         }
@@ -101,8 +113,7 @@ class MochiExporter {
       new Notice("No Cards Found!");
     } else {
       const mochiCardsEdn = await this.getMochiCardsEdn(cards);
-      const stringEnc = new util.TextEncoder();
-      const buffer = stringEnc.encode(mochiCardsEdn);
+      const buffer = strToU8(mochiCardsEdn);
       const zipped = zipSync({
         "data.edn": buffer,
       });
