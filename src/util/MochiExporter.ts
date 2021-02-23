@@ -63,10 +63,9 @@ class MochiExporter {
           lines[i].trim() !== "***"
         ) {
           lines[i] = lines[i].replace(mediaLinkRegExp, (match) => {
-            let fileName = match
-              .replace("[[", "")
-              .replace("]]", "")
-              .replace(" ", "_");
+            let fileName = this.cleanFileName(
+              match.replace("[[", "").replace("]]", "")
+            );
             let path = `[${fileName}](@media/${fileName})`;
             this.mediaFiles.push(fileName);
             return path;
@@ -85,6 +84,8 @@ class MochiExporter {
       resolve(cards);
     });
   }
+
+  cleanFileName = (text: string): string => text.replace(/\s+/g, "_");
 
   async getMochiCardsEdn(cards: Card[]): Promise<string> {
     let deckName = this.getDeckName();
@@ -163,7 +164,7 @@ class MochiExporter {
       let fileName = this.mediaFiles[i];
       let tFile = this.app.vault
         .getFiles()
-        .filter((tFile) => tFile.name.replace(" ", "_") === fileName)
+        .filter((tFile) => this.cleanFileName(tFile.name) === fileName)
         .first();
 
       if (tFile) {
