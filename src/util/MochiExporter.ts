@@ -7,7 +7,8 @@ import {
   Notice,
   App,
 } from "obsidian";
-import { Card, Settings } from "./types";
+import Settings from "../types/Settings";
+import Card from "../types/Card";
 const path = require("path");
 const dialog = require("electron").remote.dialog;
 const fs = require("fs");

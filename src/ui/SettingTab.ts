@@ -1,6 +1,9 @@
-import { DECK_FROM_ACTIVE_FILE_NAME, DECK_FROM_FRONTMATTER } from "./Constants";
 import MyPlugin from "main";
 import { PluginSettingTab, App, Setting, Notice } from "obsidian";
+import {
+  DECK_FROM_ACTIVE_FILE_NAME,
+  DECK_FROM_FRONTMATTER,
+} from "src/util/Constants";
 const dialog = require("electron").remote.dialog;
 
 class SettingTab extends PluginSettingTab {
