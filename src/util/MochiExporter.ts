@@ -9,16 +9,22 @@ import {
 } from "obsidian";
 import Settings from "../types/Settings";
 import Card from "../types/Card";
+import { nanoid } from "nanoid";
+
 const path = require("path");
 const dialog = require("electron").remote.dialog;
 const fs = require("fs");
+
+type FileNameUidPair = { fileName: string; uid: string };
 
 class MochiExporter {
   app: App;
   settings: Settings;
   activeFile: TFile;
   metaData: CachedMetadata;
-  mediaFiles: string[] = [];
+  mediaFiles: FileNameUidPair[] = [];
+
+  mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
 
   constructor(app: App, settings: Settings) {
     this.app = app;
@@ -46,8 +52,6 @@ class MochiExporter {
     let lines = await this.getLines();
     let cardTag = "#" + this.settings.cardTag.toLowerCase();
 
-    let mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
-
     let cards: Card[] = [];
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].contains(cardTag)) {
@@ -62,12 +66,21 @@ class MochiExporter {
           lines[i].trim() !== "---" &&
           lines[i].trim() !== "***"
         ) {
-          lines[i] = lines[i].replace(mediaLinkRegExp, (match) => {
-            let fileName = this.cleanFileName(
+          lines[i] = lines[i].replace(this.mediaLinkRegExp, (match) => {
+            let fileName = this.removeSpaces(
               match.replace("[[", "").replace("]]", "")
             );
-            let path = `[${fileName}](@media/${fileName})`;
-            this.mediaFiles.push(fileName);
+            let fileUid =
+              this.getUid() +
+              "." +
+              fileName.substring(fileName.lastIndexOf(".") + 1);
+            let path = `[${this.removeNonAlphaNum(
+              fileName
+            )}](@media/${fileUid})`;
+            this.mediaFiles.push({
+              fileName: fileName,
+              uid: fileUid,
+            });
             return path;
           });
 
@@ -85,7 +98,17 @@ class MochiExporter {
     });
   }
 
-  cleanFileName = (text: string): string => text.replace(/\s+/g, "_");
+  getUid = (): string => {
+    let uid = nanoid(6);
+    while (this.mediaFiles.filter((value) => value.uid === uid).length > 0)
+      uid = nanoid(6);
+    return uid;
+  };
+
+  removeSpaces = (text: string): string => text.replace(/\s+/g, "_");
+
+  removeNonAlphaNum = (text: string): string =>
+    text.replace(/[^a-zA-Z0-9+]+/gi, "_");
 
   async getMochiCardsEdn(cards: Card[]): Promise<string> {
     let deckName = this.getDeckName();
@@ -164,12 +187,12 @@ class MochiExporter {
       let fileName = this.mediaFiles[i];
       let tFile = this.app.vault
         .getFiles()
-        .filter((tFile) => this.cleanFileName(tFile.name) === fileName)
+        .filter((tFile) => this.removeSpaces(tFile.name) === fileName.fileName)
         .first();
 
       if (tFile) {
         let buffer = await this.app.vault.readBinary(tFile);
-        fileBuffers.set(fileName, new Uint8Array(buffer));
+        fileBuffers.set(fileName.uid, new Uint8Array(buffer));
       }
     }
 
