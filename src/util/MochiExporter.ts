@@ -10,6 +10,7 @@ import {
 import Settings from "../types/Settings";
 import Card from "../types/Card";
 import { nanoid } from "nanoid";
+import ProgressModal from "src/ui/ProgressModal";
 
 const path = require("path");
 const dialog = require("electron").remote.dialog;
@@ -23,6 +24,7 @@ class MochiExporter {
   activeFile: TFile;
   metaData: CachedMetadata;
   mediaFiles: FileNameUidPair[] = [];
+  progressModal: ProgressModal;
 
   mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
 
@@ -31,6 +33,7 @@ class MochiExporter {
     this.activeFile = app.workspace.getActiveFile();
     this.metaData = app.metadataCache.getFileCache(this.activeFile);
     this.settings = settings;
+    this.progressModal = new ProgressModal(this.app);
   }
 
   async getLines(): Promise<string[]> {
@@ -134,10 +137,12 @@ class MochiExporter {
   }
 
   async exportMochiCards() {
+    this.progressModal.open();
     const cards: Card[] = await this.readCards();
     const count = cards.length;
     if (count == 0) {
       new Notice("No Cards Found!");
+      this.progressModal.close();
     } else {
       try {
         if (this.settings.useDefaultSaveLocation) {
@@ -162,10 +167,12 @@ class MochiExporter {
             await this.zipFiles(savePath, cards);
           } else {
             new Notice("Export Canceled");
+            this.progressModal.close();
           }
         }
       } catch (error) {
         new Notice("Error Occurred Trying to Export Your Cards");
+        this.progressModal.close();
       }
     }
   }
@@ -198,11 +205,11 @@ class MochiExporter {
 
     const files: AsyncZippable = {};
     fileBuffers.forEach((buffer, fileName) => (files[fileName] = buffer));
-    await zip(files, (err, data) => {
+    await zip(files, async (err, data) => {
       if (err) {
         console.log(err);
         throw err;
-      } else this.saveFile(savePath, data, successMessage, errorMessage);
+      } else await this.saveFile(savePath, data, successMessage, errorMessage);
     });
   }
 
@@ -216,8 +223,10 @@ class MochiExporter {
       if (error) {
         console.log(error);
         new Notice(errorMessage);
+        this.progressModal.close();
       } else {
         new Notice(successMessage);
+        this.progressModal.close();
       }
     });
   }
