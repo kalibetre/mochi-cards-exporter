@@ -30,3 +30,9 @@ Any Text, image, or other attachment types supported by Mochi
 ## Installation
 
 To install and use this plugin, search for *Mochi Card Exporter* in the Obsidian Community Plugins from within Obsidian.
+
+## Open Source
+
+This is an open source project, so feel free to contribute !!!
+
+Check out the repo at github [Mochi-Card-Exporter](https://github.com/kalbetredev/mochi-cards-exporter)
