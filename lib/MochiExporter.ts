@@ -1,32 +1,33 @@
 import { DECK_FROM_ACTIVE_FILE_NAME } from "./Constants";
 import { strToU8, zipSync } from "fflate";
-import { TFile, CachedMetadata, parseFrontMatterEntry, Notice } from "obsidian";
+import {
+  TFile,
+  CachedMetadata,
+  parseFrontMatterEntry,
+  Notice,
+  App,
+} from "obsidian";
 import { Card, Settings } from "./types";
 const path = require("path");
 const dialog = require("electron").remote.dialog;
 const fs = require("fs");
 
 class MochiExporter {
-  activeFile: TFile;
-  fileContent: string;
-  metaData: CachedMetadata;
+  app: App;
   settings: Settings;
+  activeFile: TFile;
+  metaData: CachedMetadata;
   mediaFiles: string[] = [];
 
-  constructor(
-    activeFile: TFile,
-    fileContent: string,
-    metaData: CachedMetadata,
-    settings: Settings
-  ) {
-    this.activeFile = activeFile;
-    this.fileContent = fileContent;
-    this.metaData = metaData;
+  constructor(app: App, settings: Settings) {
+    this.activeFile = this.app.workspace.getActiveFile();
+    this.metaData = this.app.metadataCache.getFileCache(this.activeFile);
     this.settings = settings;
   }
 
   async getLines(): Promise<string[]> {
-    return this.fileContent.split("\n");
+    let fileContent = await this.app.vault.read(this.activeFile);
+    return fileContent.split("\n");
   }
 
   getDeckName(): string {
