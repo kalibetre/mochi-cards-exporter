@@ -1,4 +1,4 @@
-import { addIcon, Plugin } from "obsidian";
+import { addIcon, Notice, Plugin } from "obsidian";
 import { DEFAULT_SETTINGS } from "src/util/Constants";
 import { icons } from "src/ui/icons";
 import MochiExporter from "src/util/MochiExporter";
@@ -61,7 +61,11 @@ export default class MyPlugin extends Plugin {
   }
 
   exportMochiCards = async () => {
-    const mochiExporter = new MochiExporter(this.app, this.settings);
-    await mochiExporter.exportMochiCards();
+    if (this.app.workspace.getActiveFile().extension === "md") {
+      const mochiExporter = new MochiExporter(this.app, this.settings);
+      await mochiExporter.exportMochiCards();
+    } else {
+      new Notice("Open a Markdown File to Generate Mochi Cards");
+    }
   };
 }
