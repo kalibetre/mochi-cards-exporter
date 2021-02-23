@@ -96,9 +96,7 @@ class MochiExporter {
       }
     }
 
-    return new Promise((resolve) => {
-      resolve(cards);
-    });
+    return cards;
   }
 
   getUid = (): string => {
