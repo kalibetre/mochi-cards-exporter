@@ -1,6 +1,6 @@
 {
   "name": "mochi-cards-exporter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Export Markdown Notes to Mochi cards from within obsidian",
   "main": "main.js",
   "scripts": {
