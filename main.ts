@@ -61,17 +61,7 @@ export default class MyPlugin extends Plugin {
   }
 
   exportMochiCards = async () => {
-    let activeFile = this.app.workspace.getActiveFile();
-    let fileContent = await this.app.vault.read(activeFile);
-    let metaData = this.app.metadataCache.getFileCache(activeFile);
-
-    const mochiExporter = new MochiExporter(
-      activeFile,
-      fileContent,
-      metaData,
-      this.settings
-    );
-
+    const mochiExporter = new MochiExporter(this.app, this.settings);
     await mochiExporter.exportMochiCards();
   };
 }

@@ -1,5 +1,5 @@
 import { DECK_FROM_ACTIVE_FILE_NAME } from "./Constants";
-import { strToU8, zipSync } from "fflate";
+import { AsyncZippable, strToU8, zip } from "fflate";
 import {
   TFile,
   CachedMetadata,
@@ -20,8 +20,9 @@ class MochiExporter {
   mediaFiles: string[] = [];
 
   constructor(app: App, settings: Settings) {
-    this.activeFile = this.app.workspace.getActiveFile();
-    this.metaData = this.app.metadataCache.getFileCache(this.activeFile);
+    this.app = app;
+    this.activeFile = app.workspace.getActiveFile();
+    this.metaData = app.metadataCache.getFileCache(this.activeFile);
     this.settings = settings;
   }
 
@@ -44,7 +45,7 @@ class MochiExporter {
     let lines = await this.getLines();
     let cardTag = "#" + this.settings.cardTag.toLowerCase();
 
-    let linkRegex = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
+    let mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
 
     let cards: Card[] = [];
     for (let i = 0; i < lines.length; i++) {
@@ -60,7 +61,7 @@ class MochiExporter {
           lines[i].trim() !== "---" &&
           lines[i].trim() !== "***"
         ) {
-          lines[i] = lines[i].replace(linkRegex, (match) => {
+          lines[i] = lines[i].replace(mediaLinkRegExp, (match) => {
             let fileName = match
               .replace("[[", "")
               .replace("]]", "")
@@ -79,7 +80,7 @@ class MochiExporter {
       }
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve(cards);
     });
   }
@@ -104,7 +105,7 @@ class MochiExporter {
     mochiCard += "}]";
     mochiCard += ", :version 2}";
 
-    return new Promise((resolve, reject) => resolve(mochiCard));
+    return new Promise((resolve) => resolve(mochiCard));
   }
 
   async exportMochiCards() {
@@ -113,24 +114,13 @@ class MochiExporter {
     if (count == 0) {
       new Notice("No Cards Found!");
     } else {
-      const mochiCardsEdn = await this.getMochiCardsEdn(cards);
-      const buffer = strToU8(mochiCardsEdn);
-      const zipped = zipSync({
-        "data.edn": buffer,
-      });
-
-      const successMessage = `${count} Card${
-        count > 1 ? "s" : ""
-      } Exported Successfully`;
-      const errorMessage = "Error Occurred Exporting Your Cards!";
-
       try {
         if (this.settings.useDefaultSaveLocation) {
           let savePath = path.join(
             this.settings.defaultSaveLocation,
             `${this.getDeckName()}.mochi`
           );
-          this.saveFile(savePath, zipped, successMessage, errorMessage);
+          await this.zipFiles(savePath, cards);
         } else {
           const options = {
             title: "Select a Folder",
@@ -139,13 +129,12 @@ class MochiExporter {
           };
 
           const saveResponse = await dialog.showOpenDialog(null, options);
-
           if (!saveResponse.canceled) {
             let savePath = path.join(
               saveResponse.filePaths[0],
               `${this.getDeckName()}.mochi`
             );
-            this.saveFile(savePath, zipped, successMessage, errorMessage);
+            await this.zipFiles(savePath, cards);
           } else {
             new Notice("Export Canceled");
           }
@@ -154,6 +143,42 @@ class MochiExporter {
         new Notice("Error Occurred Trying to Export Your Cards");
       }
     }
+  }
+
+  async zipFiles(savePath: string, cards: Card[]) {
+    const count = cards.length;
+
+    const successMessage = `${count} Card${
+      count > 1 ? "s" : ""
+    } Exported Successfully`;
+    const errorMessage = "Error Occurred Exporting Your Cards!";
+
+    const mochiCardsEdn = await this.getMochiCardsEdn(cards);
+    const buffer = strToU8(mochiCardsEdn);
+    const fileBuffers: Map<string, Uint8Array> = new Map();
+    fileBuffers.set("data.edn", buffer);
+
+    for (let i = 0; i < this.mediaFiles.length; i++) {
+      let fileName = this.mediaFiles[i];
+      let tFile = this.app.vault
+        .getFiles()
+        .filter((tFile) => tFile.name.replace(" ", "_") === fileName)
+        .first();
+
+      if (tFile) {
+        let buffer = await this.app.vault.readBinary(tFile);
+        fileBuffers.set(fileName, new Uint8Array(buffer));
+      }
+    }
+
+    const files: AsyncZippable = {};
+    fileBuffers.forEach((buffer, fileName) => (files[fileName] = buffer));
+    await zip(files, (err, data) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      } else this.saveFile(savePath, data, successMessage, errorMessage);
+    });
   }
 
   saveFile(
