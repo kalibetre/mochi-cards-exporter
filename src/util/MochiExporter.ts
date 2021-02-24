@@ -28,9 +28,9 @@ class MochiExporter {
 
   mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
 
-  constructor(app: App, settings: Settings) {
+  constructor(app: App, activeFile: TFile, settings: Settings) {
     this.app = app;
-    this.activeFile = app.workspace.getActiveFile();
+    this.activeFile = activeFile;
     this.metaData = app.metadataCache.getFileCache(this.activeFile);
     this.settings = settings;
     this.progressModal = new ProgressModal(this.app);
@@ -131,7 +131,7 @@ class MochiExporter {
     mochiCard += "}]";
     mochiCard += ", :version 2}";
 
-    return new Promise((resolve) => resolve(mochiCard));
+    return mochiCard;
   }
 
   async exportMochiCards() {
