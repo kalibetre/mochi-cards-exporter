@@ -131,7 +131,7 @@ class MochiExporter {
     mochiCard += "}]";
     mochiCard += ", :version 2}";
 
-    return new Promise((resolve) => resolve(mochiCard));
+    return mochiCard;
   }
 
   async exportMochiCards() {
