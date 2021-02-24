@@ -1,4 +1,4 @@
-import { addIcon, Notice, Plugin } from "obsidian";
+import { addIcon, Notice, Plugin, TFile } from "obsidian";
 import { DEFAULT_SETTINGS } from "src/util/Constants";
 import { icons } from "src/ui/icons";
 import MochiExporter from "src/util/MochiExporter";
@@ -23,7 +23,8 @@ export default class MyPlugin extends Plugin {
     this.addIcons();
 
     this.addRibbonIcon(icons.stackedCards.key, "Mochi Cards Exporter", () => {
-      this.exportMochiCards();
+      let activeFile = this.app.workspace.getActiveFile();
+      this.exportMochiCards(activeFile);
     });
 
     this.addCommand({
@@ -33,7 +34,7 @@ export default class MyPlugin extends Plugin {
         let activeFile = this.app.workspace.getActiveFile();
         if (activeFile) {
           if (!checking) {
-            this.exportMochiCards();
+            this.exportMochiCards(activeFile);
           }
           return true;
         }
@@ -60,9 +61,13 @@ export default class MyPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
-  exportMochiCards = async () => {
-    if (this.app.workspace.getActiveFile().extension === "md") {
-      const mochiExporter = new MochiExporter(this.app, this.settings);
+  exportMochiCards = async (activeFile: TFile) => {
+    if (activeFile.extension === "md") {
+      const mochiExporter = new MochiExporter(
+        this.app,
+        activeFile,
+        this.settings
+      );
       await mochiExporter.exportMochiCards();
     } else {
       new Notice("Open a Markdown File to Generate Mochi Cards");
