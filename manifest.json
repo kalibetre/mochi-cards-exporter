@@ -1,0 +1,10 @@
+{
+  "id": "mochi-cards-exporter",
+  "name": "Mochi Cards Exporter",
+  "version": "0.2.2",
+  "minAppVersion": "0.9.12",
+  "description": "Export Markdown notes to Mochi cards from within obsidian",
+  "author": "Kalkidan Betre",
+  "authorUrl": "https://github.com/kalbetredev",
+  "isDesktopOnly": true
+}
