@@ -1,9 +1,11 @@
 import MyPlugin from "main";
+import { settings } from "node:cluster";
 import { PluginSettingTab, App, Setting, Notice } from "obsidian";
 import {
   DECK_FROM_ACTIVE_FILE_NAME,
   DECK_FROM_FRONTMATTER,
 } from "src/util/Constants";
+import { hideTagFromPreview } from "src/util/HideTagFromPreview";
 const dialog = require("electron").remote.dialog;
 
 class SettingTab extends PluginSettingTab {
@@ -50,9 +52,21 @@ class SettingTab extends PluginSettingTab {
           } else {
             this.plugin.settings.cardTag = value;
             await this.plugin.saveSettings();
+            //hideTagFromPreview(this.plugin.settings.hideTagInPreview, value);
           }
         })
       );
+    
+    new Setting(containerEl)
+      .setName("Hide Tag")
+      .setDesc("Enable to hide the above specified tag in Preview Mode")
+      .addToggle((toggle) => toggle
+      .onChange(async (value) => {
+        this.plugin.settings.hideTagInPreview = value;
+        await this.plugin.saveSettings();
+        hideTagFromPreview(value, this.plugin.settings.cardTag);
+      })
+      .setValue(this.plugin.settings.hideTagInPreview));
 
     new Setting(containerEl)
       .setName("Use Default Save Location")
@@ -60,13 +74,13 @@ class SettingTab extends PluginSettingTab {
         "If you turn this off, you will be prompted to choose a folder for exports."
       )
       .addToggle((toggle) =>
-        toggle
-          .onChange(async (value) => {
-            this.plugin.settings.useDefaultSaveLocation = value;
-            await this.plugin.saveSettings();
-            toggleSettingsEl();
-          })
-          .setValue(this.plugin.settings.useDefaultSaveLocation)
+      toggle
+      .onChange(async (value) => {
+        this.plugin.settings.useDefaultSaveLocation = value;
+        await this.plugin.saveSettings();
+        toggleSettingsEl();
+      })
+      .setValue(this.plugin.settings.useDefaultSaveLocation)
       );
 
     const defaultSaveLocation = new Setting(containerEl);
