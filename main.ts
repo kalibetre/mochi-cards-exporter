@@ -4,6 +4,7 @@ import { icons } from "src/ui/icons";
 import MochiExporter from "src/util/MochiExporter";
 import Settings from "src/types/Settings";
 import SettingTab from "src/ui/SettingTab";
+import { hideTagFromPreview } from "src/util/HideTagFromPreview";
 
 const homedir = require("os").homedir();
 
@@ -19,6 +20,8 @@ export default class MyPlugin extends Plugin {
       this.settings.defaultSaveLocation = homedir;
       await this.saveSettings();
     }
+
+    hideTagFromPreview(this.settings.hideTagInPreview, this.settings.cardTag);
 
     this.addIcons();
 
