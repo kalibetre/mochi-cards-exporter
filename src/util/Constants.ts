@@ -8,4 +8,5 @@ export const DEFAULT_SETTINGS: Settings = {
   cardTag: "card",
   deckNamingOption: DECK_FROM_ACTIVE_FILE_NAME,
   defaultSaveLocation: "",
+  hideTagInPreview: false,
 };
