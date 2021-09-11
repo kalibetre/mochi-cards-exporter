@@ -139,7 +139,7 @@ class MochiExporter {
     const cards: Card[] = await this.readCards();
     const count = cards.length;
     if (count == 0) {
-      new Notice("No Cards Found!");
+      new Notice("No cards found.");
       this.progressModal.close();
     } else {
       try {
@@ -151,7 +151,7 @@ class MochiExporter {
           await this.zipFiles(savePath, cards);
         } else {
           const options = {
-            title: "Select a Folder",
+            title: "Select a folder",
             properties: ["openDirectory"],
             defaultPath: this.settings.defaultSaveLocation,
           };
@@ -164,12 +164,12 @@ class MochiExporter {
             );
             await this.zipFiles(savePath, cards);
           } else {
-            new Notice("Export Canceled");
+            new Notice("Export canceled.");
             this.progressModal.close();
           }
         }
       } catch (error) {
-        new Notice("Error Occurred Trying to Export Your Cards");
+        new Notice("An error occurred while trying to export your cards.");
         this.progressModal.close();
       }
     }
@@ -181,7 +181,7 @@ class MochiExporter {
     const successMessage = `${count} Card${
       count > 1 ? "s" : ""
     } Exported Successfully`;
-    const errorMessage = "Error Occurred Exporting Your Cards!";
+    const errorMessage = "An error occurred while exporting your cards.";
 
     const mochiCardsEdn = await this.getMochiCardsEdn(cards);
     const buffer = strToU8(mochiCardsEdn);
