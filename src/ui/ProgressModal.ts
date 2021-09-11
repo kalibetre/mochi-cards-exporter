@@ -8,9 +8,9 @@ class ProgressModal extends Modal {
   onOpen() {
     let { contentEl } = this;
     contentEl.setText(
-      "(You can close this window. Exporter will continue in the background.)"
+      "(You can close this window. The exporter continues in the background.)"
     );
-    this.titleEl.setText("Exporting Your Cards, Please Wait ....");
+    this.titleEl.setText("Exporting your cards …");
   }
 
   onClose() {
