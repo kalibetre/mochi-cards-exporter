@@ -1,7 +1,7 @@
 {
   "name": "mochi-cards-exporter",
   "version": "0.2.3",
-  "description": "Export Markdown Notes to Mochi cards from within obsidian",
+  "description": "Export Markdown-based notes from Obsidian to Mochi cards.",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
