@@ -27,6 +27,7 @@ class MochiExporter {
   progressModal: ProgressModal;
 
   mediaLinkRegExp = /\[\[(.+?)(?:\|(.+))?\]\]/gim;
+  errorMessage = "An error occurred while exporting your cards.";
 
   constructor(app: App, activeFile: TFile, settings: Settings) {
     this.app = app;
@@ -169,7 +170,7 @@ class MochiExporter {
           }
         }
       } catch (error) {
-        new Notice("An error occurred while trying to export your cards.");
+        new Notice(this.errorMessage);
         this.progressModal.close();
       }
     }
@@ -181,7 +182,6 @@ class MochiExporter {
     const successMessage = `${count} Card${
       count > 1 ? "s" : ""
     } Exported Successfully`;
-    const errorMessage = "An error occurred while exporting your cards.";
 
     const mochiCardsEdn = await this.getMochiCardsEdn(cards);
     const buffer = strToU8(mochiCardsEdn);
@@ -207,7 +207,7 @@ class MochiExporter {
       if (err) {
         console.log(err);
         throw err;
-      } else await this.saveFile(savePath, data, successMessage, errorMessage);
+      } else await this.saveFile(savePath, data, successMessage, this.errorMessage);
     });
   }
 
